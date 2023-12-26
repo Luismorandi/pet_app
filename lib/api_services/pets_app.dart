@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 
 import '../models/home.dart';
@@ -12,14 +14,26 @@ class ApiService {
         age: pet['age'],
         type: pet['type'],
         genre: pet['genre'],
-        breed: pet['breed'])));
+        breed: pet['breed'],
+        description: pet['description'],
+        imageUrl: pet['imageUrl'])));
   }
 
-  Future<List<PetType>> getTypes() async {
-    final response = await _dio.get("http://172.18.160.1:8080/api/v1/types");
-    print(response.data);
-    return List<PetType>.from(response.data.map((type) => PetType(
-          type: type['type'],
-        )));
+  Future<List<dynamic>> getTypes() async {
+    try {
+      final response = await Dio().get("http://172.18.160.1:8080/api/v1/types");
+      return response.data;
+    } catch (error) {
+      throw new HttpException("Error: get types not found");
+    }
+  }
+
+  Future<List<dynamic>> getCountries() async {
+    try {
+      final response = await Dio().get("https://restcountries.com/v3.1/all");
+      return response.data;
+    } catch (error) {
+      throw new HttpException("Error: get countries not found");
+    }
   }
 }

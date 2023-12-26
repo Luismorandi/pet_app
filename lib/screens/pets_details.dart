@@ -25,7 +25,7 @@ class PetDetailsScreen extends StatelessWidget {
                     decoration: BoxDecoration(
                       image: DecorationImage(
                         image: NetworkImage(
-                          "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/Golden_Retriever_Puppy_12weeks.JPG/1200px-Golden_Retriever_Puppy_12weeks.JPG",
+                          "${pet.imageUrl}",
                         ),
                         fit: BoxFit.cover,
                       ),
@@ -58,7 +58,7 @@ class PetDetailsScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      "${pet.breed} - ${pet.age} years old",
+                      "Su raza es ${pet.breed} - Tiene ${pet.age} años",
                       style: TextStyle(
                         fontSize: 18,
                         color: Colors.grey[600],
@@ -74,7 +74,7 @@ class PetDetailsScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      "Genre: ${pet.genre}",
+                      "Genero: ${pet.genre}",
                       style: TextStyle(
                         fontSize: 18,
                         color: Colors.grey[600],
@@ -86,7 +86,7 @@ class PetDetailsScreen extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.all(20.0),
                 child: Text(
-                  "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+                  "${pet.description}",
                   style: TextStyle(
                     fontSize: 16,
                     color: Colors.grey[600],
@@ -105,7 +105,7 @@ class PetDetailsScreen extends StatelessWidget {
                     ),
                   ),
                   onPressed: () => print('Adopt'),
-                  child: const Text('Adopt'),
+                  child: const Text('Adoptar'),
                 ),
               ),
             ],

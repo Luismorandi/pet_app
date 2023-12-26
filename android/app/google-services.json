@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "430887481580",
+    "project_id": "authenticator-97fc6",
+    "storage_bucket": "authenticator-97fc6.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:430887481580:android:e556e4058e8287640975c9",
+        "android_client_info": {
+          "package_name": "com.example.pets_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "430887481580-7t8265usfpc2ll3umc6u9rhp31kuc34q.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDZ8VciKtqDyGitnCgGeoYHiGu6NayR81g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "430887481580-7t8265usfpc2ll3umc6u9rhp31kuc34q.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "430887481580-s6bd2lu87r4iu0ngapl5ntmrv242crne.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.petsApp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

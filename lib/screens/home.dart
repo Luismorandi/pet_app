@@ -1,11 +1,12 @@
-// home.dart
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import '../api_services/pets_app.dart';
 import '../models/home.dart';
 
 class Home extends StatefulWidget {
   const Home({Key? key}) : super(key: key);
+
   @override
   State<Home> createState() => _HomeState();
 }
@@ -23,26 +24,39 @@ class _HomeState extends State<Home> {
   void initState() {
     super.initState();
     getPets();
-    print('${fetchTypes()}, ${getPets()},holñaaaaaaaaaaaa');
-
     fetchTypes();
     filterPetsByType(null);
   }
 
   Future<void> getPets() async {
-    final petList = await apiService.getPets();
-    setState(() {
-      pets = petList;
-      originalPets = List.from(pets!);
-    });
+    try {
+      final petList = await apiService.getPets();
+      setState(() {
+        pets = petList;
+        originalPets = List.from(pets!);
+      });
+    } catch (error) {
+      print('Error fetching pets: $error');
+      // Handle the error according to your needs
+    }
   }
 
   Future<void> fetchTypes() async {
-    final typeList = await apiService.getTypes();
-    print('${typeList}, holñaaaaaaaaaaaa');
-    setState(() {
-      types = typeList;
-    });
+    try {
+      final response = await apiService.getTypes();
+      List<PetType> typeList = List<PetType>.from(response.map((type) {
+        return PetType(
+          type: type['type'],
+        );
+      }));
+
+      setState(() {
+        types = typeList;
+      });
+    } catch (error) {
+      print('Error fetching types: $error');
+      // Handle the error according to your needs
+    }
   }
 
   void filterPetsByType(PetType? type) {
@@ -57,7 +71,6 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
-    print('${types}, hol');
     return Scaffold(
       appBar: AppBar(
         title: const Text("Pets App"),
@@ -167,7 +180,6 @@ class _HomeState extends State<Home> {
                         padding: const EdgeInsets.symmetric(horizontal: 30),
                         child: Center(
                           child: Text(
-                            // Capitaliza la primera letra del tipo
                             '${types![index].type[0].toUpperCase()}${types![index].type.substring(1)}',
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
@@ -184,49 +196,60 @@ class _HomeState extends State<Home> {
             ),
             const SizedBox(height: 20),
             Expanded(
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 10,
-                  crossAxisSpacing: 10,
-                ),
-                itemCount: pets?.length ?? 0,
-                itemBuilder: (context, index) => InkWell(
-                  onTap: () {
-                    _onPetTap(pets![index]);
-                  },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      color: Colors.white70,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ClipRRect(
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(20),
-                            topRight: Radius.circular(20),
+              child: pets == null || pets!.isEmpty
+                  ? Center(
+                      child: Text(
+                        'No hay mascotas por ahora',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    )
+                  : GridView.builder(
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 10,
+                        crossAxisSpacing: 10,
+                      ),
+                      itemCount: pets?.length ?? 0,
+                      itemBuilder: (context, index) => InkWell(
+                        onTap: () {
+                          _onPetTap(pets![index]);
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            color: Colors.white70,
                           ),
-                          child: Image.network(
-                            "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/Golden_Retriever_Puppy_12weeks.JPG/1200px-Golden_Retriever_Puppy_12weeks.JPG",
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ClipRRect(
+                                borderRadius: const BorderRadius.only(
+                                  topLeft: Radius.circular(20),
+                                  topRight: Radius.circular(20),
+                                ),
+                                child: Image.network(
+                                  "${pets![index].imageUrl}",
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Text(
+                                  '${pets![index].name} - ${pets![index].age}yrs ',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 10),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Text(
-                            '${pets![index].name} - ${pets![index].age}yrs ',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
-                ),
-              ),
             ),
           ],
         ),
@@ -266,6 +289,20 @@ class _HomeState extends State<Home> {
     Navigator.pushNamed(context, '/pet-details', arguments: pet);
   }
 
+  void signOut() async {
+    try {
+      await FirebaseAuth.instance.signOut();
+      User? user = FirebaseAuth.instance.currentUser;
+      DefaultCacheManager().emptyCache();
+      // Después de cerrar sesión, puedes navegar a la pantalla de inicio de sesión o a cualquier otra pantalla
+      // Puedes usar Navigator.pushReplacementNamed para reemplazar la pila de rutas con la nueva pantalla
+      Navigator.pushReplacementNamed(context, '/');
+      // Ajusta la ruta según tu estructura de proyecto
+    } catch (e) {
+      print("Error al cerrar sesión: $e");
+    }
+  }
+
   void _showOptionsBottomSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -289,6 +326,11 @@ class _HomeState extends State<Home> {
                   onTap: () {
                     Navigator.pushNamed(context, '/add-pet');
                   },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.upload),
+                  title: const Text('Cerrar sesion'),
+                  onTap: signOut,
                 ),
                 ListTile(
                   leading: const Icon(Icons.settings),

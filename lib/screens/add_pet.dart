@@ -2,6 +2,9 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:pets_app/screens/home.dart';
 
+import '../api_services/pets_app.dart';
+import '../models/home.dart';
+
 class AddPetScreen extends StatelessWidget {
   const AddPetScreen({Key? key}) : super(key: key);
 
@@ -32,21 +35,23 @@ class _AddPetFormState extends State<AddPetForm> {
   final TextEditingController ownerIdController = TextEditingController();
   final TextEditingController addressController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
+  final TextEditingController imageUrlController = TextEditingController();
+
+  ApiService apiService = ApiService();
 
   List<Map<String, dynamic>> types = [];
+  List<Map<String, dynamic>> pets = [];
+
   List<Map<String, dynamic>> countries = [];
 
-  // Método para obtener la lista de países
   Future<void> getCountries() async {
     try {
-      final response = await Dio().get("https://restcountries.com/v3.1/all");
+      final response = await apiService.getCountries();
       setState(() {
-        // Ajusta la lógica para adaptarse a la estructura de tus datos
-        countries = List<Map<String, dynamic>>.from(response.data)
+        countries = List<Map<String, dynamic>>.from(response)
             .map((country) =>
                 {"value": country["cca3"], "label": country["name"]["common"]})
             .toList();
-        print("countries: $countries");
       });
     } catch (error) {
       print("Error al obtener datos de países: $error");
@@ -56,14 +61,19 @@ class _AddPetFormState extends State<AddPetForm> {
   // Define the getTypes method here
   Future<void> getTypes() async {
     try {
-      final response = await Dio().get("http://172.18.160.1:8080/api/v1/types");
+      final response = await apiService.getTypes();
+      print("antes");
+      print(response);
+
       setState(() {
-        // Ajusta la lógica para adaptarse a la estructura de tus datos
-        types = List<Map<String, dynamic>>.from(response.data)
-            .map((type) => {"value": type["id"], "label": type["type"]})
+        types = response
+            .map<Map<String, dynamic>>((type) => {
+                  "label": type['type'],
+                })
             .toList();
-        print("Types: $types");
       });
+
+      print(types);
     } catch (error) {
       print("Error al obtener datos: $error");
     }
@@ -89,6 +99,7 @@ class _AddPetFormState extends State<AddPetForm> {
           "ownerId": ownerIdController.text,
           "address": addressController.text,
           "description": descriptionController.text,
+          "imageUrl": imageUrlController.text,
         },
       );
 
@@ -102,7 +113,7 @@ class _AddPetFormState extends State<AddPetForm> {
               TextButton(
                 onPressed: () {
                   Navigator.of(context).pop();
-                  Navigator.pushNamed(context, '/');
+                  Navigator.pushNamed(context, '/home');
                 },
                 child: const Text('OK'),
               ),
@@ -130,6 +141,10 @@ class _AddPetFormState extends State<AddPetForm> {
             controller: descriptionController,
             decoration: const InputDecoration(labelText: 'Descripción'),
           ),
+          TextFormField(
+            controller: imageUrlController,
+            decoration: const InputDecoration(labelText: 'Imagen'),
+          ),
           DropdownButtonFormField<String>(
             value: typeController.text.isNotEmpty ? typeController.text : null,
             onChanged: (String? value) {
@@ -138,15 +153,17 @@ class _AddPetFormState extends State<AddPetForm> {
               });
             },
             items: types
-                    ?.where((type) =>
-                        type['value'] is String && type['label'] is String)
+                    ?.where((type) => type['label'] is String)
+                    .toSet() // Eliminar duplicados
                     .map<DropdownMenuItem<String>>(
-                      (type) => DropdownMenuItem<String>(
-                        value: type['label'],
-                        child: Text(type['label']),
-                      ),
-                    )
-                    .toList() ??
+                  (type) {
+                    final label = type['label'] as String?;
+                    return DropdownMenuItem<String>(
+                      value: label,
+                      child: Text(label ?? ''),
+                    );
+                  },
+                ).toList() ??
                 [],
             decoration: const InputDecoration(labelText: 'Tipo'),
           ),
@@ -187,7 +204,6 @@ class _AddPetFormState extends State<AddPetForm> {
             value: countries.isNotEmpty ? countries[0]['value'] : null,
             onChanged: (String? value) {
               setState(() {
-                // Al seleccionar un país, actualiza el texto del controlador de dirección
                 addressController.text = value ?? '';
               });
             },
