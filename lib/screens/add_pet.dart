@@ -1,9 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:pets_app/screens/home.dart';
 
 import '../api_services/pets_app.dart';
 import '../models/home.dart';
+import 'auth_static.dart';
 
 class AddPetScreen extends StatelessWidget {
   const AddPetScreen({Key? key}) : super(key: key);
@@ -32,12 +34,12 @@ class _AddPetFormState extends State<AddPetForm> {
   final TextEditingController ageController = TextEditingController();
   final TextEditingController genreController = TextEditingController();
   final TextEditingController breedController = TextEditingController();
-  final TextEditingController ownerIdController = TextEditingController();
   final TextEditingController addressController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
   final TextEditingController imageUrlController = TextEditingController();
 
   ApiService apiService = ApiService();
+  Position? _currentPosition;
 
   List<Map<String, dynamic>> types = [];
   List<Map<String, dynamic>> pets = [];
@@ -72,8 +74,6 @@ class _AddPetFormState extends State<AddPetForm> {
                 })
             .toList();
       });
-
-      print(types);
     } catch (error) {
       print("Error al obtener datos: $error");
     }
@@ -83,11 +83,16 @@ class _AddPetFormState extends State<AddPetForm> {
   void initState() {
     super.initState();
     getCountries();
-    getTypes(); // Llama a la función para obtener los tipos al cargar la pantalla
+    getTypes();
+    _getCurrentLocation();
   }
 
   Future<void> createPet() async {
     try {
+      String result = AuthData
+              .userCredential?.additionalUserInfo?.profile?['id']
+              ?.toString() ??
+          'N/A';
       final response = await Dio().post(
         "http://172.18.160.1:8080/api/v1/pets",
         data: {
@@ -96,7 +101,7 @@ class _AddPetFormState extends State<AddPetForm> {
           "age": int.parse(ageController.text),
           "genre": genreController.text,
           "breed": breedController.text,
-          "ownerId": ownerIdController.text,
+          "ownerId": result,
           "address": addressController.text,
           "description": descriptionController.text,
           "imageUrl": imageUrlController.text,
@@ -124,6 +129,24 @@ class _AddPetFormState extends State<AddPetForm> {
     } catch (error) {
       print("Error al agregar mascota: $error");
       // Puedes mostrar un mensaje de error aquí si es necesario
+    }
+  }
+
+  Future<void> _getCurrentLocation() async {
+    try {
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      print(position);
+
+      setState(() {
+        _currentPosition = position;
+        addressController.text = "${position.latitude}, ${position.longitude}";
+      });
+    } catch (e) {
+      print("Error al obtener la ubicación: $e");
+      // Puedes manejar el caso en el que no se pueda obtener la ubicación
     }
   }
 
@@ -195,31 +218,6 @@ class _AddPetFormState extends State<AddPetForm> {
           TextFormField(
             controller: breedController,
             decoration: const InputDecoration(labelText: 'Raza'),
-          ),
-          TextFormField(
-            controller: ownerIdController,
-            decoration: const InputDecoration(labelText: 'ID del Propietario'),
-          ),
-          DropdownButtonFormField<String>(
-            value: countries.isNotEmpty ? countries[0]['value'] : null,
-            onChanged: (String? value) {
-              setState(() {
-                addressController.text = value ?? '';
-              });
-            },
-            items: countries
-                    ?.where((country) =>
-                        country['value'] is String &&
-                        country['label'] is String)
-                    .map<DropdownMenuItem<String>>(
-                      (country) => DropdownMenuItem<String>(
-                        value: country['value'],
-                        child: Text(country['label']),
-                      ),
-                    )
-                    .toList() ??
-                [],
-            decoration: const InputDecoration(labelText: 'País'),
           ),
           const SizedBox(height: 16),
           ElevatedButton(

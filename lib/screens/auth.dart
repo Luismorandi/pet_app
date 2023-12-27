@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_signin_button/button_list.dart';
 import 'package:flutter_signin_button/button_view.dart';
 
+import 'auth_static.dart';
+
 class Auth extends StatefulWidget {
   const Auth({super.key});
 
@@ -47,12 +49,11 @@ class _AuthState extends State<Auth> {
               UserCredential userCredential =
                   await _auth.signInWithProvider(_googleAuthProvider);
 
-              // Verifica si la autenticación fue exitosa
               if (userCredential.user != null) {
-                // Navega a la pantalla de inicio (Home) y reemplaza la pila de rutas actual
+                AuthData.userCredential = userCredential;
                 Navigator.of(context).pop();
-                Navigator.pushNamed(context, '/home');
-
+                Navigator.of(context)
+                    .pushNamedAndRemoveUntil('/home', (route) => false);
                 ;
               }
             } catch (error) {

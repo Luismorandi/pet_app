@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:pets_app/screens/auth_static.dart';
 import '../api_services/pets_app.dart';
 import '../models/home.dart';
 
@@ -26,6 +27,7 @@ class _HomeState extends State<Home> {
     getPets();
     fetchTypes();
     filterPetsByType(null);
+    AuthData.authVerification(context);
   }
 
   Future<void> getPets() async {
@@ -75,16 +77,11 @@ class _HomeState extends State<Home> {
       appBar: AppBar(
         title: const Text("Pets App"),
         actions: [
-          IconButton(
-            onPressed: () {
-              _showOptionsBottomSheet(context);
-            },
-            icon: const Icon(Icons.menu),
-          ),
           CircleAvatar(
             radius: 20.0,
-            backgroundImage: AssetImage('assets/avatar.png'),
-            backgroundColor: Colors.transparent,
+            backgroundImage: NetworkImage(
+              "${AuthData.userCredential?.additionalUserInfo?.profile?['picture']}",
+            ),
           ),
         ],
       ),
@@ -103,11 +100,6 @@ class _HomeState extends State<Home> {
                     _showOptionsBottomSheet(context);
                   },
                   icon: const Icon(Icons.menu),
-                ),
-                CircleAvatar(
-                  radius: 20.0,
-                  backgroundImage: AssetImage('assets/avatar.png'),
-                  backgroundColor: Colors.transparent,
                 ),
               ],
             ),
@@ -239,7 +231,7 @@ class _HomeState extends State<Home> {
                               Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: Text(
-                                  '${pets![index].name} - ${pets![index].age}yrs ',
+                                  '${pets![index].name} - ${pets![index].age} año/s',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -294,10 +286,8 @@ class _HomeState extends State<Home> {
       await FirebaseAuth.instance.signOut();
       User? user = FirebaseAuth.instance.currentUser;
       DefaultCacheManager().emptyCache();
-      // Después de cerrar sesión, puedes navegar a la pantalla de inicio de sesión o a cualquier otra pantalla
-      // Puedes usar Navigator.pushReplacementNamed para reemplazar la pila de rutas con la nueva pantalla
-      Navigator.pushReplacementNamed(context, '/');
-      // Ajusta la ruta según tu estructura de proyecto
+      AuthData.userCredential = null;
+      Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
     } catch (e) {
       print("Error al cerrar sesión: $e");
     }
