@@ -64,8 +64,6 @@ class _AddPetFormState extends State<AddPetForm> {
   Future<void> getTypes() async {
     try {
       final response = await apiService.getTypes();
-      print("antes");
-      print(response);
 
       setState(() {
         types = response

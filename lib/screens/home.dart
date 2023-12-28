@@ -314,7 +314,7 @@ class _HomeState extends State<Home> {
                   leading: const Icon(Icons.upload),
                   title: const Text('Upload Pet'),
                   onTap: () {
-                    Navigator.pushNamed(context, '/add-pet');
+                    Navigator.pushNamed(context, '/maps', arguments: pets);
                   },
                 ),
                 ListTile(
