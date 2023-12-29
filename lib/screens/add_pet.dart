@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:logger/logger.dart';
 
 import '../api_services/pets_app.dart';
@@ -42,25 +41,15 @@ class _AddPetFormState extends State<AddPetForm> {
   final TextEditingController imageUrlController = TextEditingController();
 
   ApiService apiService = ApiService();
-  Position? _currentPosition;
 
   List<Map<String, dynamic>> types = [];
-  List<Map<String, dynamic>> pets = [];
 
-  List<Map<String, dynamic>> countries = [];
+  bool isAddressFound = false;
 
-  Future<void> getCountries() async {
-    try {
-      final response = await apiService.getCountries();
-      setState(() {
-        countries = List<Map<String, dynamic>>.from(response)
-            .map((country) =>
-                {"value": country["cca3"], "label": country["name"]["common"]})
-            .toList();
-      });
-    } catch (error) {
-      logger.e("Error al obtener datos de países: $error");
-    }
+  @override
+  void initState() {
+    super.initState();
+    getTypes();
   }
 
   Future<void> getTypes() async {
@@ -79,61 +68,85 @@ class _AddPetFormState extends State<AddPetForm> {
     }
   }
 
+  Future<bool> searchAddresses(String address) async {
+    try {
+      List<Location> locations = await locationFromAddress(address);
+      return locations.isNotEmpty;
+    } catch (error) {
+      return false;
+    }
+  }
+
   Future<void> createPet() async {
     try {
       String result = AuthData
               .userCredential?.additionalUserInfo?.profile?['id']
               ?.toString() ??
           'N/A';
-      List<Location> locations =
-          await locationFromAddress(addressController.text);
-      Location location = locations.first;
-      String coordinates = "${location.latitude}, ${location.longitude}";
 
-      final response = await Dio().post(
-        "https://petappback-production.up.railway.app/api/v1/pets",
-        data: {
-          "name": nameController.text,
-          "type": typeController.text,
-          "age": int.parse(ageController.text),
-          "genre": genreController.text,
-          "breed": breedController.text,
-          "ownerId": result,
-          "address":
-              coordinates, // Utiliza las coordenadas obtenidas desde la dirección
-          "description": descriptionController.text,
-          "imageUrl": imageUrlController.text,
-        },
-      );
+      bool isAddressValid = await searchAddresses(addressController.text);
 
-      showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: const Text('Éxito'),
-            content: const Text('La mascota se ha agregado exitosamente.'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  Navigator.pushNamed(context, '/home');
-                },
-                child: const Text('OK'),
-              ),
-            ],
-          );
-        },
-      );
+      if (isAddressValid) {
+        List<Location> locations =
+            await locationFromAddress(addressController.text);
+        Location location = locations.first;
+        String coordinates = "${location.latitude}, ${location.longitude}";
+
+        final response = await Dio().post(
+          "https://petappback-production.up.railway.app/api/v1/pets",
+          data: {
+            "name": nameController.text,
+            "type": typeController.text,
+            "age": int.parse(ageController.text),
+            "genre": genreController.text,
+            "breed": breedController.text,
+            "ownerId": result,
+            "address": coordinates,
+            "description": descriptionController.text,
+            "imageUrl": imageUrlController.text,
+          },
+        );
+
+        showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text('Éxito'),
+              content: const Text('La mascota se ha agregado exitosamente.'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    Navigator.pushNamed(context, '/home');
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            );
+          },
+        );
+      } else {
+        showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text('Error'),
+              content: const Text('La dirección no es válida.'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            );
+          },
+        );
+      }
     } catch (error) {
       logger.e("Error al agregar mascota: $error");
     }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    getCountries();
-    getTypes();
   }
 
   @override
@@ -157,6 +170,20 @@ class _AddPetFormState extends State<AddPetForm> {
           TextFormField(
             controller: addressController,
             decoration: const InputDecoration(labelText: 'Dirección manual'),
+            onChanged: (value) {
+              searchAddresses(value).then((found) {
+                setState(() {
+                  isAddressFound = found;
+                });
+              });
+            },
+          ),
+          Text(
+            isAddressFound ? 'Dirección encontrada' : 'Dirección no encontrada',
+            style: TextStyle(
+              color: isAddressFound ? Colors.green : Colors.red,
+              fontSize: 12,
+            ),
           ),
           DropdownButtonFormField<String>(
             value: typeController.text.isNotEmpty ? typeController.text : null,
