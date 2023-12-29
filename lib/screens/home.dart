@@ -107,7 +107,7 @@ class _HomeState extends State<Home> {
             ),
             const SizedBox(height: 18.0),
             Text(
-              '¡Encuentra a tu nnuva mascota!',
+              '¡Encuentra a tu nueva mascota!',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 18,
