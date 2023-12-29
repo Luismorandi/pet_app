@@ -85,15 +85,13 @@ class _AddPetFormState extends State<AddPetForm> {
               .userCredential?.additionalUserInfo?.profile?['id']
               ?.toString() ??
           'N/A';
-
-      // Convierte la dirección a coordenadas geográficas
       List<Location> locations =
           await locationFromAddress(addressController.text);
       Location location = locations.first;
       String coordinates = "${location.latitude}, ${location.longitude}";
 
       final response = await Dio().post(
-        "http://172.18.160.1:8080/api/v1/pets",
+        "https://petappback-production.up.railway.app/api/v1/pets",
         data: {
           "name": nameController.text,
           "type": typeController.text,

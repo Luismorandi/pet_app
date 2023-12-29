@@ -8,7 +8,8 @@ class ApiService {
   final Dio _dio = Dio();
 
   Future<List<Pet>> getPets() async {
-    final response = await _dio.get("http://172.18.160.1:8080/api/v1/pets");
+    final response = await _dio
+        .get("https://petappback-production.up.railway.app/api/v1/pets");
     return List<Pet>.from(response.data.map((pet) => Pet(
         name: pet['name'],
         age: pet['age'],
@@ -22,7 +23,8 @@ class ApiService {
 
   Future<List<dynamic>> getTypes() async {
     try {
-      final response = await Dio().get("http://172.18.160.1:8080/api/v1/types");
+      final response = await Dio()
+          .get("https://petappback-production.up.railway.app/api/v1/types");
       return response.data;
     } catch (error) {
       throw new HttpException("Error: get types not found");
