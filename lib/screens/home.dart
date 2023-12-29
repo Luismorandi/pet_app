@@ -107,7 +107,7 @@ class _HomeState extends State<Home> {
             ),
             const SizedBox(height: 18.0),
             Text(
-              'Find a new friend',
+              '¡Encuentra a tu nnuva mascota!',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 18,
@@ -192,13 +192,7 @@ class _HomeState extends State<Home> {
             Expanded(
               child: pets == null || pets!.isEmpty
                   ? Center(
-                      child: Text(
-                        'No hay mascotas por ahora',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      child: CircularProgressIndicator(),
                     )
                   : GridView.builder(
                       gridDelegate:
