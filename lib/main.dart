@@ -29,5 +29,4 @@ class MyApp extends StatelessWidget {
           '/maps': (context) => MapScreen()
         });
   }
-  // This widget is the root of your application.
 }

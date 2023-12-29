@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:logger/logger.dart';
 
 import '../models/home.dart';
 
@@ -10,6 +11,9 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
+  var logger = Logger(
+    printer: PrettyPrinter(),
+  );
   late GoogleMapController mapController;
   List<Marker> markers = [];
   Position? _currentPosition;
@@ -28,11 +32,9 @@ class _MapScreenState extends State<MapScreen> {
 
       setState(() {
         _currentPosition = position;
-        print(_currentPosition?.longitude);
       });
     } catch (e) {
-      print("Error al obtener la ubicación: $e");
-      // Puedes manejar el caso en el que no se pueda obtener la ubicación
+      logger.e("Error al obtener la ubicación: $e");
     }
   }
 
@@ -47,7 +49,8 @@ class _MapScreenState extends State<MapScreen> {
       ),
       body: _currentPosition != null
           ? GoogleMap(
-              onMapCreated: _onMapCreated,
+              onMapCreated: (controller) =>
+                  _onMapCreated(controller, arguments),
               initialCameraPosition: CameraPosition(
                 target: LatLng(
                   _currentPosition?.latitude ?? 0.0,
@@ -58,20 +61,46 @@ class _MapScreenState extends State<MapScreen> {
               markers: Set.from(markers),
             )
           : Center(
-              child:
-                  CircularProgressIndicator(), // o algún otro indicador de carga
+              child: CircularProgressIndicator(),
             ),
     );
   }
 
-  void _onMapCreated(GoogleMapController controller) {
+  void _onMapCreated(GoogleMapController controller, List<Pet>? pets) {
     setState(() {
       mapController = controller;
+      if (pets != null) {
+        for (var elemento in pets) {
+          if (elemento != null && elemento.address != null) {
+            List<String> coordenadas = elemento.address.split(', ');
+            if (coordenadas.length == 2) {
+              try {
+                double latitud = double.parse(coordenadas[0]);
+                double longitud = double.parse(coordenadas[1]);
 
-      // Agrega marcadores para las ubicaciones deseadas
-      _addMarker(LatLng(37.7749, -122.4194), 'Ubicación 1');
-      _addMarker(LatLng(37.7897, -122.4057), 'Ubicación 2');
-      // Agrega más marcadores según sea necesario
+                _addMarker(
+                    LatLng(latitud, longitud), 'Ubicación ${elemento.name}');
+                Marker marker = Marker(
+                  markerId: MarkerId('Ubicación ${elemento.name}'),
+                  position: LatLng(latitud, longitud),
+                  onTap: () {
+                    Navigator.pushNamed(context, '/pet-details',
+                        arguments: elemento);
+                  },
+                );
+
+                markers.add(marker);
+              } catch (e) {
+                logger.e(
+                    "Error al convertir coordenadas para ${elemento.name}: $e");
+              }
+            } else {
+              logger.e(
+                  "Formato de coordenadas incorrecto para ${elemento.name}: ${elemento.address}");
+            }
+          }
+        }
+      }
     });
   }
 

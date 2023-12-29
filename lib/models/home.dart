@@ -6,6 +6,7 @@ class Pet {
   final String breed;
   final String description;
   final String imageUrl;
+  final String address;
 
   Pet(
       {required this.name,
@@ -14,7 +15,8 @@ class Pet {
       required this.genre,
       required this.breed,
       required this.description,
-      required this.imageUrl});
+      required this.imageUrl,
+      required this.address});
 }
 
 class PetType {

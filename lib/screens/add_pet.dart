@@ -1,10 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:pets_app/screens/home.dart';
+import 'package:logger/logger.dart';
 
 import '../api_services/pets_app.dart';
-import '../models/home.dart';
 import 'auth_static.dart';
 
 class AddPetScreen extends StatelessWidget {
@@ -29,6 +29,9 @@ class AddPetForm extends StatefulWidget {
 }
 
 class _AddPetFormState extends State<AddPetForm> {
+  var logger = Logger(
+    printer: PrettyPrinter(),
+  );
   final TextEditingController nameController = TextEditingController();
   final TextEditingController typeController = TextEditingController();
   final TextEditingController ageController = TextEditingController();
@@ -56,11 +59,10 @@ class _AddPetFormState extends State<AddPetForm> {
             .toList();
       });
     } catch (error) {
-      print("Error al obtener datos de países: $error");
+      logger.e("Error al obtener datos de países: $error");
     }
   }
 
-  // Define the getTypes method here
   Future<void> getTypes() async {
     try {
       final response = await apiService.getTypes();
@@ -73,16 +75,8 @@ class _AddPetFormState extends State<AddPetForm> {
             .toList();
       });
     } catch (error) {
-      print("Error al obtener datos: $error");
+      logger.e("Error al obtener datos: $error");
     }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    getCountries();
-    getTypes();
-    _getCurrentLocation();
   }
 
   Future<void> createPet() async {
@@ -91,6 +85,13 @@ class _AddPetFormState extends State<AddPetForm> {
               .userCredential?.additionalUserInfo?.profile?['id']
               ?.toString() ??
           'N/A';
+
+      // Convierte la dirección a coordenadas geográficas
+      List<Location> locations =
+          await locationFromAddress(addressController.text);
+      Location location = locations.first;
+      String coordinates = "${location.latitude}, ${location.longitude}";
+
       final response = await Dio().post(
         "http://172.18.160.1:8080/api/v1/pets",
         data: {
@@ -100,7 +101,8 @@ class _AddPetFormState extends State<AddPetForm> {
           "genre": genreController.text,
           "breed": breedController.text,
           "ownerId": result,
-          "address": addressController.text,
+          "address":
+              coordinates, // Utiliza las coordenadas obtenidas desde la dirección
           "description": descriptionController.text,
           "imageUrl": imageUrlController.text,
         },
@@ -125,27 +127,15 @@ class _AddPetFormState extends State<AddPetForm> {
         },
       );
     } catch (error) {
-      print("Error al agregar mascota: $error");
-      // Puedes mostrar un mensaje de error aquí si es necesario
+      logger.e("Error al agregar mascota: $error");
     }
   }
 
-  Future<void> _getCurrentLocation() async {
-    try {
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-
-      print(position);
-
-      setState(() {
-        _currentPosition = position;
-        addressController.text = "${position.latitude}, ${position.longitude}";
-      });
-    } catch (e) {
-      print("Error al obtener la ubicación: $e");
-      // Puedes manejar el caso en el que no se pueda obtener la ubicación
-    }
+  @override
+  void initState() {
+    super.initState();
+    getCountries();
+    getTypes();
   }
 
   @override
@@ -166,6 +156,10 @@ class _AddPetFormState extends State<AddPetForm> {
             controller: imageUrlController,
             decoration: const InputDecoration(labelText: 'Imagen'),
           ),
+          TextFormField(
+            controller: addressController,
+            decoration: const InputDecoration(labelText: 'Dirección manual'),
+          ),
           DropdownButtonFormField<String>(
             value: typeController.text.isNotEmpty ? typeController.text : null,
             onChanged: (String? value) {
@@ -175,7 +169,7 @@ class _AddPetFormState extends State<AddPetForm> {
             },
             items: types
                     ?.where((type) => type['label'] is String)
-                    .toSet() // Eliminar duplicados
+                    .toSet()
                     .map<DropdownMenuItem<String>>(
                   (type) {
                     final label = type['label'] as String?;
@@ -211,7 +205,7 @@ class _AddPetFormState extends State<AddPetForm> {
                 child: const Text('Femenino'),
               ),
             ],
-            decoration: const InputDecoration(labelText: 'Género'),
+            decoration: const InputDecoration(labelText: 'Sexo'),
           ),
           TextFormField(
             controller: breedController,

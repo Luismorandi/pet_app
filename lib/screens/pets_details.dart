@@ -11,7 +11,6 @@ class PetDetailsScreen extends StatelessWidget {
     if (arguments != null) {
       final Pet pet = arguments;
 
-      // Ahora puedes acceder a los detalles del pet
       final String petName = pet.name;
       return Scaffold(
         body: SingleChildScrollView(
@@ -74,7 +73,7 @@ class PetDetailsScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      "Genero: ${pet.genre}",
+                      "Sexo: ${pet.genre}",
                       style: TextStyle(
                         fontSize: 18,
                         color: Colors.grey[600],
@@ -104,7 +103,7 @@ class PetDetailsScreen extends StatelessWidget {
                       horizontal: 100,
                     ),
                   ),
-                  onPressed: () => print('Adopt'),
+                  onPressed: () => print('Adoptar'),
                   child: const Text('Adoptar'),
                 ),
               ),
@@ -122,6 +121,5 @@ class PetDetailsScreen extends StatelessWidget {
         ),
       );
     }
-    return SizedBox.shrink();
   }
 }

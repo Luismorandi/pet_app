@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:logger/logger.dart';
 import 'package:pets_app/screens/auth_static.dart';
 import '../api_services/pets_app.dart';
 import '../models/home.dart';
@@ -13,6 +14,9 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  var logger = Logger(
+    printer: PrettyPrinter(),
+  );
   List<Pet>? pets;
   List<PetType>? types;
   PetType? selectedType;
@@ -25,7 +29,7 @@ class _HomeState extends State<Home> {
   void initState() {
     super.initState();
     getPets();
-    fetchTypes();
+    getTypes();
     filterPetsByType(null);
     AuthData.authVerification(context);
   }
@@ -38,12 +42,11 @@ class _HomeState extends State<Home> {
         originalPets = List.from(pets!);
       });
     } catch (error) {
-      print('Error fetching pets: $error');
-      // Handle the error according to your needs
+      logger.e('Error fetching pets: $error');
     }
   }
 
-  Future<void> fetchTypes() async {
+  Future<void> getTypes() async {
     try {
       final response = await apiService.getTypes();
       List<PetType> typeList = List<PetType>.from(response.map((type) {
@@ -56,8 +59,7 @@ class _HomeState extends State<Home> {
         types = typeList;
       });
     } catch (error) {
-      print('Error fetching types: $error');
-      // Handle the error according to your needs
+      logger.e('Error fetching types: $error');
     }
   }
 
@@ -289,7 +291,7 @@ class _HomeState extends State<Home> {
       AuthData.userCredential = null;
       Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
     } catch (e) {
-      print("Error al cerrar sesión: $e");
+      logger.e("Error al cerrar sesión: $e");
     }
   }
 
@@ -312,22 +314,22 @@ class _HomeState extends State<Home> {
               children: [
                 ListTile(
                   leading: const Icon(Icons.upload),
-                  title: const Text('Upload Pet'),
+                  title: const Text('Carga a tu mascota'),
+                  onTap: () {
+                    Navigator.pushNamed(context, '/add-pet');
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.map),
+                  title: const Text('Encuentra una mascota cerca'),
                   onTap: () {
                     Navigator.pushNamed(context, '/maps', arguments: pets);
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.upload),
+                  leading: const Icon(Icons.exit_to_app),
                   title: const Text('Cerrar sesion'),
                   onTap: signOut,
-                ),
-                ListTile(
-                  leading: const Icon(Icons.settings),
-                  title: const Text('Settings'),
-                  onTap: () {
-                    Navigator.pop(context);
-                  },
                 ),
               ],
             ),

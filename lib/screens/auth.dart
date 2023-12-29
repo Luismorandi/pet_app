@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_signin_button/button_list.dart';
 import 'package:flutter_signin_button/button_view.dart';
+import 'package:logger/logger.dart';
 
 import 'auth_static.dart';
 
@@ -13,6 +14,9 @@ class Auth extends StatefulWidget {
 }
 
 class _AuthState extends State<Auth> {
+  var logger = Logger(
+    printer: PrettyPrinter(),
+  );
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   @override
@@ -42,7 +46,7 @@ class _AuthState extends State<Auth> {
         height: 50,
         child: SignInButton(
           Buttons.Google,
-          text: "Sign in",
+          text: "Ingresar",
           onPressed: () async {
             try {
               GoogleAuthProvider _googleAuthProvider = GoogleAuthProvider();
@@ -57,7 +61,7 @@ class _AuthState extends State<Auth> {
                 ;
               }
             } catch (error) {
-              print(error);
+              logger.e(error);
             }
           },
         ),

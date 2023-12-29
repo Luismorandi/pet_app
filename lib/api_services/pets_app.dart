@@ -16,7 +16,8 @@ class ApiService {
         genre: pet['genre'],
         breed: pet['breed'],
         description: pet['description'],
-        imageUrl: pet['imageUrl'])));
+        imageUrl: pet['imageUrl'],
+        address: pet['address'])));
   }
 
   Future<List<dynamic>> getTypes() async {
